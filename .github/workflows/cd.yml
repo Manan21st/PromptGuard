@@ -24,24 +24,35 @@ jobs:
       # ----------------------------------------------------
       - name: Set up Kubernetes cluster (kind)
         uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: promptguard
 
       # ----------------------------------------------------
-      # 3. Pull CI-built Docker image
+      # 3. Verify kind cluster
+      # ----------------------------------------------------
+      - name: Verify kind cluster
+        run: |
+          kind get clusters
+          kubectl get nodes
+
+      # ----------------------------------------------------
+      # 4. Pull CI-built Docker image
       # ----------------------------------------------------
       - name: Pull Docker image
         run: |
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/promptguard:${{ github.event.workflow_run.head_sha }}
 
       # ----------------------------------------------------
-      # 4. Load Docker image into kind cluster
+      # 5. Load Docker image into kind cluster
       # ----------------------------------------------------
       - name: Load image into kind
         run: |
           kind load docker-image \
-            ${{ secrets.DOCKERHUB_USERNAME }}/promptguard:${{ github.event.workflow_run.head_sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/promptguard:${{ github.event.workflow_run.head_sha }} \
+            --name promptguard
 
       # ----------------------------------------------------
-      # 5. Deploy application to Kubernetes
+      # 6. Deploy application to Kubernetes
       # ----------------------------------------------------
       - name: Deploy to Kubernetes
         run: |
@@ -51,14 +62,14 @@ jobs:
           kubectl apply -f k8s/service.yaml
 
       # ----------------------------------------------------
-      # 6. Wait for deployment rollout
+      # 7. Wait for deployment rollout
       # ----------------------------------------------------
       - name: Wait for rollout
         run: |
           kubectl rollout status deployment/promptguard --timeout=120s
 
       # ----------------------------------------------------
-      # 7. Validate application health
+      # 8. Validate application health
       # ----------------------------------------------------
       - name: Validate health endpoint
         run: |
@@ -67,7 +78,7 @@ jobs:
           curl -f http://localhost:8080/health/
 
       # ----------------------------------------------------
-      # 8. Optional smoke test with Gemini API
+      # 9. Optional smoke test with Gemini API
       # ----------------------------------------------------
       - name: Optional Gemini smoke test
         continue-on-error: true
