@@ -69,23 +69,27 @@ jobs:
           kubectl rollout status deployment/promptguard --timeout=120s
 
       # ----------------------------------------------------
-      # 8. Validate application health
+      # 8. Port forward service
+      # ----------------------------------------------------
+      - name: Port forward service
+        run: |
+          kubectl port-forward svc/promptguard-service 18080:80 &
+          sleep 10
+
+      # ----------------------------------------------------
+      # 9. Validate application health
       # ----------------------------------------------------
       - name: Validate health endpoint
         run: |
-          kubectl port-forward svc/promptguard-service 8080:80 &
-          sleep 10
-          curl -f http://localhost:8080/health/
+          curl -f http://localhost:18080/health/
 
       # ----------------------------------------------------
-      # 9. Optional smoke test with Gemini API
+      # 10. Optional smoke test with Gemini API
       # ----------------------------------------------------
       - name: Optional Gemini smoke test
         continue-on-error: true
         run: |
-          kubectl port-forward svc/promptguard-service 8080:80 &
-          sleep 10
-          curl -X POST http://localhost:8080/evaluate/ \
+          curl -X POST http://localhost:18080/evaluate/ \
           -H "Content-Type: application/json" \
           -d '{"prompt":"Say hello politely"}'
 
