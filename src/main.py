@@ -11,4 +11,4 @@ app.include_router(health_router, prefix="/health", tags=["Health"])
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to PromptGuard API"}
+    return {"message": "Welcome to PromptGuard API!!"}
